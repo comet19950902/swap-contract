@@ -107,10 +107,11 @@ contract TokenSwap {
         tokenN.buyTokens{value: msg.value}(amount);
     }
 
-    function swapTKM(uint256 amountTKM) public returns (uint256) {
+    function swapTKM(uint256 amountTKM, uint256 expireTime) public returns (uint256) {
         require(amountTKM > 0, "amountTKM must be greater then zero");
         require(tokenM.balanceOf(msg.sender) >= amountTKM, "Sender doesn't have enough Tokens");
 
+        uint256 beginningTime = block.timestamp;
         uint256 exchangeM = uint256(amountTKM * ratioMN);
         uint256 exchangeAmount = exchangeM - ((exchangeM * fees) / 100);
 
@@ -122,13 +123,16 @@ contract TokenSwap {
         tokenN.approve(address(this), exchangeAmount);
         tokenN.transferFrom(address(this), msg.sender, exchangeAmount);
 
+        require(block.timestamp <= beginningTime + expireTime, "Swap Period is expired");
+
         return exchangeAmount;
     }
 
-    function swapTKN(uint256 amountTKN) public returns (uint256) {
+    function swapTKN(uint256 amountTKN, uint256 expireTime) public returns (uint256) {
         require(amountTKN >= ratioMN, "AmountTKN must be greater than ratio");
         require(tokenN.balanceOf(msg.sender) >= amountTKN, "Sender doesn't have enough Tokens");
 
+        uint256 beginningTime = block.timestamp;
         uint256 exchangeN = amountTKN / ratioMN;
         uint256 exchangeAmount = exchangeN - ((exchangeN * fees) / 100);
 
@@ -139,6 +143,8 @@ contract TokenSwap {
         tokenN.transferFrom(msg.sender, address(this), amountTKN);
         tokenM.approve(address(this), exchangeAmount);
         tokenM.transferFrom(address(this), msg.sender, exchangeAmount);
+
+        require(block.timestamp <= beginningTime + expireTime, "Swap Period is expired");
 
         return exchangeAmount;
     }
